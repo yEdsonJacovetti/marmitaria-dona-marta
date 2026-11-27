@@ -1,3 +1,7 @@
+Link do web app: https://marmitaria-dona-marta.vercel.app/
+
+# 
+
 # Documentação
 
 Ele resolve o caos dos pedidos soltos no WhatsApp e roda direto no navegador , **sem instalar nada e sem internet**. Os dados ficam salvos no próprio navegador (LocalStorage).
@@ -25,21 +29,22 @@ docs/03-backlog-e-sprints.md  Product Backlog, WIP, DoD e Sprints
 
 ## Transparência no uso de IA
 
-Usei o \*\*Claude\*\* como copiloto de desenvolvimento. Todos os commits gerados com ajuda da IA trazem a marcação do Claude no histórico do git.
+Usei o \\\*\\\*Claude\\\*\\\* como copiloto de desenvolvimento. Todos os commits gerados com ajuda da IA trazem a marcação do Claude no histórico do git.
 
-\* fez o rascunho do mapa da jornada, dos esboços de tela e do backlog em Histórias de Usuário a partir do enunciado;
-\* escreveu os testes antes do código (TDD) e depois a implementação das regras e das telas;
+\\\* fez o rascunho do mapa da jornada, dos esboços de tela e do backlog em Histórias de Usuário a partir do enunciado;
+\\\* escreveu os testes antes do código (TDD) e depois a implementação das regras e das telas;
 
 ### Decisões de produto que foram minhas
 
-\* Quais tamanhos, preços, ingredientes e adicionais o cardápio tem;
-\* O que entrou na Sprint 1 e o que entrou na Sprint 2, e porque;
-\* Não tenho pessoas para o teste então eu mesmo fiz;
+\\\* Quais tamanhos, preços, ingredientes e adicionais o cardápio tem;
+\\\* O que entrou na Sprint 1 e o que entrou na Sprint 2, e porque;
+\\\* Não tenho pessoas para o teste então eu mesmo fiz;
 
-Link do jira usado nas sprints: **https://edsonjacovetti2002.atlassian.net/jira/software/projects/MDM/boards/34/backlog?atlOrigin=eyJpIjoiMTczMmJhYzQ2ZmRkNDIxMzhlZDRlZTNkZDBmNjgxOWEiLCJwIjoiaiJ9**
+Link do jira usado nas sprints: https://edsonjacovetti2002.atlassian.net/jira/software/projects/MDM/boards/34/backlog?atlOrigin=eyJpIjoiMTczMmJhYzQ2ZmRkNDIxMzhlZDRlZTNkZDBmNjgxOWEiLCJwIjoiaiJ9
 
 
-Link do GitHub: **https://github.com/yEdsonJacovetti/marmitaria-dona-marta**
+Link do GitHub: https://github.com/yEdsonJacovetti/marmitaria-dona-marta
 
-Link do web app: **https://marmitaria-dona-marta.vercel.app/**
+
+
 
