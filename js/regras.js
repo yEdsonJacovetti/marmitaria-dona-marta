@@ -28,22 +28,36 @@
     return { tamanho, quantidade, personalizacoes: [] };
   }
 
-  function aplicarPersonalizacao(item, p) {
-    const lista = item.personalizacoes;
+  // Ingrediente que a personalização "mexe" (sem → ingrediente, troca → de)
+  const ingredienteAfetado = (p) => (p.tipo === 'sem' ? p.ingrediente : p.tipo === 'troca' ? p.de : null);
 
-    if (p.tipo === 'sem') {
+  // Cada tipo valida só o que é dele; regras comuns ficam em aplicarPersonalizacao
+  const VALIDADORES = {
+    sem: (p) => {
       if (!CARDAPIO.ingredientes.includes(p.ingrediente)) throw new Error(`Ingrediente não existe na marmita: ${p.ingrediente}`);
-      if (lista.some((x) => x.tipo === 'sem' && x.ingrediente === p.ingrediente)) throw new Error('Essa personalização já foi aplicada');
-      if (lista.some((x) => x.tipo === 'troca' && x.de === p.ingrediente)) throw new Error(`Conflito: ${p.ingrediente} já foi trocado`);
-    } else if (p.tipo === 'troca') {
+    },
+    troca: (p) => {
       if (!CARDAPIO.trocas.some((t) => t.de === p.de && t.para === p.para)) throw new Error(`Troca não prevista: ${p.de} por ${p.para}`);
-      if (lista.some((x) => x.tipo === 'troca' && x.de === p.de)) throw new Error('Essa troca já foi aplicada');
-      if (lista.some((x) => x.tipo === 'sem' && x.ingrediente === p.de)) throw new Error(`Conflito: ${p.de} já foi retirado`);
-    } else if (p.tipo === 'adicional') {
+    },
+    adicional: (p) => {
       if (!(p.nome in CARDAPIO.adicionais)) throw new Error(`Adicional não existe: ${p.nome}`);
-      if (lista.some((x) => x.tipo === 'adicional' && x.nome === p.nome)) throw new Error('Esse adicional já foi aplicado');
-    } else {
-      throw new Error(`Tipo de personalização inválido: ${p.tipo}`);
+    },
+  };
+
+  const mesmaPersonalizacao = (a, b) =>
+    a.tipo === b.tipo && (a.tipo === 'adicional' ? a.nome === b.nome : ingredienteAfetado(a) === ingredienteAfetado(b));
+
+  function aplicarPersonalizacao(item, p) {
+    const validar = VALIDADORES[p.tipo];
+    if (!validar) throw new Error(`Tipo de personalização inválido: ${p.tipo}`);
+    validar(p);
+
+    const lista = item.personalizacoes;
+    if (lista.some((x) => mesmaPersonalizacao(x, p))) throw new Error('Essa personalização já foi aplicada');
+
+    const afetado = ingredienteAfetado(p);
+    if (afetado && lista.some((x) => ingredienteAfetado(x) === afetado)) {
+      throw new Error(`Conflito: ${afetado} já foi retirado ou trocado`);
     }
 
     return { ...item, personalizacoes: [...lista, { ...p }] };
