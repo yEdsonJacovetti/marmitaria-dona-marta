@@ -13,6 +13,8 @@
     <nav class="abas" aria-label="Telas">
       <button class="aba ativa" data-tela="pedido">Pedido</button>
       <button class="aba" data-tela="cozinha">Cozinha <span class="contador" id="cont-cozinha"></span></button>
+      <button class="aba" data-tela="entregas">Entregas <span class="contador" id="cont-entregas"></span></button>
+      <button class="aba" data-tela="caixa">Caixa</button>
     </nav>
   </header>
 
@@ -85,6 +87,34 @@
           <h2>Prontos</h2>
           <div id="col-pronto"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- TELA 3: ENTREGAS -->
+    <section id="tela-entregas" class="tela">
+      <div class="quadro">
+        <div class="coluna">
+          <h2>Prontos para sair</h2>
+          <div id="col-ent-pronto"></div>
+        </div>
+        <div class="coluna">
+          <h2>Saiu para entrega</h2>
+          <div id="col-ent-saiu"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 4: CAIXA -->
+    <section id="tela-caixa" class="tela">
+      <h2>Caixa de hoje <small id="data-caixa"></small></h2>
+      <div class="resumo" id="resumo-caixa"></div>
+      <div class="bloco">
+        <h2>Quem está devendo</h2>
+        <div id="lista-devedores"></div>
+      </div>
+      <div class="bloco">
+        <h2>Pedidos do dia</h2>
+        <ul id="lista-dia" class="lista-itens"></ul>
       </div>
     </section>
   </main>

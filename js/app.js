@@ -328,17 +328,35 @@
       .join('')}</ul>`;
   }
 
+  // Texto do botão para cada próximo status
+  const ROTULO_AVANCAR = {
+    preparando: ['Começar', 'alerta'],
+    pronto: ['Pronto', 'sucesso'],
+    saiu: ['Saiu para entrega', 'primario'],
+    entregue: ['Entregue', 'sucesso'],
+  };
+
+  function botaoAvancar(p) {
+    const proximo = R.proximoStatus(p);
+    if (!proximo) return '';
+    const [texto, cor] = ROTULO_AVANCAR[proximo];
+    const rotulo = proximo === 'entregue' && p.tipoEntrega === 'retirada' ? 'Cliente retirou' : texto;
+    return `<button class="btn ${cor}" data-avancar="${p.id}">${rotulo}</button>`;
+  }
+
+  const etiquetaPagamento = (p) =>
+    `<span class="etiqueta ${p.pago ? 'pago' : 'pendente'}">${p.formaPagamento} · ${p.pago ? 'pago' : 'pendente'}</span>`;
+
   function cartaoCozinha(p) {
-    const botoes = {
-      novo: `<button class="btn alerta" data-status="${p.id}:preparando">Começar</button>`,
-      preparando: `<button class="btn sucesso" data-status="${p.id}:pronto">Pronto</button>`,
-      pronto: '',
-    };
+    const podeCancelar = p.status === 'novo' || p.status === 'preparando';
     return `<div class="cartao ${p.status}">
       <div class="cartao-topo"><span>#${p.id} ${esc(p.cliente.nome)}</span><span class="hora">${hora(p.criadoEm)}</span></div>
       ${p.tipoEntrega === 'retirada' ? '<span class="etiqueta retirada">Retirada</span>' : ''}
       ${cartaoItens(p)}
-      <div class="acoes">${botoes[p.status] || ''}</div>
+      <div class="acoes">
+        ${p.status === 'pronto' ? '' : botaoAvancar(p)}
+        ${podeCancelar ? `<button class="btn perigo" data-cancelar="${p.id}">Cancelar</button>` : ''}
+      </div>
     </div>`;
   }
 
@@ -358,22 +376,114 @@
   }
   renderizadores.cozinha = renderCozinha;
 
-  $('tela-cozinha').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-status]');
-    if (!btn) return;
-    const [id, novoStatus] = btn.dataset.status.split(':');
-    const pedido = pedidos.find((p) => String(p.id) === id);
-    pedido.status = novoStatus;
+  // =====================================================
+  // TELA: ENTREGAS
+  // =====================================================
+  function cartaoEntrega(p) {
+    const destino = p.tipoEntrega === 'retirada'
+      ? '<span class="etiqueta retirada">Retirada no balcão</span>'
+      : `<div class="endereco">📍 ${esc(p.cliente.endereco)}</div>`;
+    return `<div class="cartao ${p.status}">
+      <div class="cartao-topo"><span>#${p.id} ${esc(p.cliente.nome)}</span><span>${R.formatarReais(p.total)}</span></div>
+      ${destino}
+      ${p.cliente.telefone ? `<div class="endereco">📞 ${esc(p.cliente.telefone)}</div>` : ''}
+      ${etiquetaPagamento(p)}
+      <div class="acoes">
+        ${botaoAvancar(p)}
+        ${p.pago ? '' : `<button class="btn alerta" data-pagar="${p.id}">Recebi</button>`}
+      </div>
+    </div>`;
+  }
+
+  function renderEntregas() {
+    preencherColuna('col-ent-pronto', pedidos.filter((p) => p.status === 'pronto'), cartaoEntrega);
+    preencherColuna('col-ent-saiu', pedidos.filter((p) => p.status === 'saiu'), cartaoEntrega);
+  }
+  renderizadores.entregas = renderEntregas;
+
+  // =====================================================
+  // TELA: CAIXA
+  // =====================================================
+  const mesmoDia = (iso, ref) => new Date(iso).toDateString() === ref.toDateString();
+
+  function renderCaixa() {
+    const hoje = new Date();
+    const doDia = pedidos.filter((p) => mesmoDia(p.criadoEm, hoje));
+    const c = R.fecharCaixa(doDia);
+    const f = R.formatarReais;
+
+    $('data-caixa').textContent = hoje.toLocaleDateString('pt-BR');
+    $('resumo-caixa').innerHTML = `
+      <div class="indicador destaque"><span>Faturado</span><strong>${f(c.total)}</strong></div>
+      <div class="indicador ok"><span>Recebido</span><strong>${f(c.recebido)}</strong></div>
+      <div class="indicador ${c.pendente ? 'ruim' : ''}"><span>Pendente</span><strong>${f(c.pendente)}</strong></div>
+      <div class="indicador"><span>Pix</span><strong>${f(c.porForma.pix)}</strong></div>
+      <div class="indicador"><span>Dinheiro</span><strong>${f(c.porForma.dinheiro)}</strong></div>
+      <div class="indicador"><span>Pedidos</span><strong>${c.qtdPedidos}</strong>${c.qtdCancelados ? ` <small>(${c.qtdCancelados} cancelado${c.qtdCancelados > 1 ? 's' : ''})</small>` : ''}</div>`;
+
+    $('lista-devedores').innerHTML = c.devedores.length
+      ? c.devedores
+          .map(
+            (p) => `<div class="cartao ${p.status}">
+              <div class="cartao-topo"><span>#${p.id} ${esc(p.cliente.nome)}</span><span>${f(p.total)}</span></div>
+              ${etiquetaPagamento(p)}
+              <div class="acoes"><button class="btn alerta" data-pagar="${p.id}">Recebi</button></div>
+            </div>`
+          )
+          .join('')
+      : '<div class="vazio-coluna">Ninguém devendo 🎉</div>';
+
+    $('lista-dia').innerHTML = doDia.length
+      ? doDia
+          .slice()
+          .reverse()
+          .map(
+            (p) => `<li><div class="desc"><strong>#${p.id} ${esc(p.cliente.nome)}</strong> — ${hora(p.criadoEm)}
+              <br><small>${p.status}</small></div>
+              <span>${p.status === 'cancelado' ? '<s>' + f(p.total) + '</s>' : f(p.total)}</span></li>`
+          )
+          .join('')
+      : '<li class="vazio">Nenhum pedido hoje</li>';
+  }
+  renderizadores.caixa = renderCaixa;
+
+  // ---------- Ações nos cartões (cozinha, entregas e caixa) ----------
+  function alterarPedido(id, regra) {
+    const i = pedidos.findIndex((p) => String(p.id) === String(id));
+    pedidos[i] = regra(pedidos[i]); // as regras devolvem um pedido novo (imutável)
     salvarTudo();
-    renderCozinha();
     atualizarContadores();
-    if (R.situacaoWip(pedidos, LIMITE_WIP).excedido) avisar('Atenção: pedidos demais em preparo!', true);
+    const telaAtiva = document.querySelector('.aba.ativa').dataset.tela;
+    renderizadores[telaAtiva]();
+  }
+
+  document.querySelector('main').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-avancar], [data-cancelar], [data-pagar]');
+    if (!btn) return;
+    try {
+      if (btn.dataset.avancar) {
+        alterarPedido(btn.dataset.avancar, R.avancarStatus);
+        const p = pedidos.find((x) => String(x.id) === btn.dataset.avancar);
+        if (p.status === 'entregue' && !p.pago) avisar(`Pedido #${p.id} entregue SEM pagamento — ficou no Caixa como pendente`, true);
+        else if (R.situacaoWip(pedidos, LIMITE_WIP).excedido) avisar('Atenção: pedidos demais em preparo!', true);
+      } else if (btn.dataset.cancelar) {
+        if (!confirm(`Cancelar o pedido #${btn.dataset.cancelar}?`)) return;
+        alterarPedido(btn.dataset.cancelar, R.cancelarPedido);
+        avisar(`Pedido #${btn.dataset.cancelar} cancelado`);
+      } else if (btn.dataset.pagar) {
+        alterarPedido(btn.dataset.pagar, R.marcarPago);
+        avisar(`Pagamento do pedido #${btn.dataset.pagar} registrado`);
+      }
+    } catch (err) {
+      avisar(err.message, true);
+    }
   });
 
   // ---------- Contadores nas abas ----------
   function atualizarContadores() {
-    const naCozinha = pedidos.filter((p) => p.status === 'novo' || p.status === 'preparando').length;
-    $('cont-cozinha').textContent = naCozinha || '';
+    const conta = (...status) => pedidos.filter((p) => status.includes(p.status)).length;
+    $('cont-cozinha').textContent = conta('novo', 'preparando') || '';
+    $('cont-entregas').textContent = conta('pronto', 'saiu') || '';
   }
 
   // Início
