@@ -105,6 +105,55 @@
     return { emPreparo, limite, excedido: emPreparo > limite };
   }
 
+  // ---------- Sprint 2: status, pagamento e caixa ----------
+  const FLUXO = {
+    entrega: ['novo', 'preparando', 'pronto', 'saiu', 'entregue'],
+    retirada: ['novo', 'preparando', 'pronto', 'entregue'],
+  };
+  const PODE_CANCELAR = ['novo', 'preparando'];
+
+  function proximoStatus(pedido) {
+    const fluxo = FLUXO[pedido.tipoEntrega];
+    const i = fluxo.indexOf(pedido.status);
+    if (i === -1 || i === fluxo.length - 1) return null; // cancelado ou já entregue
+    return fluxo[i + 1];
+  }
+
+  function avancarStatus(pedido) {
+    const proximo = proximoStatus(pedido);
+    if (!proximo) throw new Error(`Pedido ${pedido.status} não pode avançar`);
+    return { ...pedido, status: proximo };
+  }
+
+  function cancelarPedido(pedido) {
+    if (!PODE_CANCELAR.includes(pedido.status)) throw new Error(`Não dá para cancelar um pedido ${pedido.status}`);
+    return { ...pedido, status: 'cancelado' };
+  }
+
+  function marcarPago(pedido) {
+    if (pedido.status === 'cancelado') throw new Error('Pedido cancelado não recebe pagamento');
+    return { ...pedido, pago: true };
+  }
+
+  function fecharCaixa(pedidos) {
+    const validos = pedidos.filter((p) => p.status !== 'cancelado');
+    const pagos = validos.filter((p) => p.pago);
+    const soma = (lista) => lista.reduce((s, p) => s + p.total, 0);
+
+    return {
+      qtdPedidos: validos.length,
+      qtdCancelados: pedidos.length - validos.length,
+      total: soma(validos),
+      recebido: soma(pagos),
+      pendente: soma(validos.filter((p) => !p.pago)),
+      porForma: {
+        pix: soma(pagos.filter((p) => p.formaPagamento === 'pix')),
+        dinheiro: soma(pagos.filter((p) => p.formaPagamento === 'dinheiro')),
+      },
+      devedores: validos.filter((p) => !p.pago),
+    };
+  }
+
   function formatarReais(centavos) {
     const reais = Math.floor(centavos / 100)
       .toString()
@@ -121,6 +170,11 @@
     descreverPersonalizacoes,
     criarPedido,
     situacaoWip,
+    proximoStatus,
+    avancarStatus,
+    cancelarPedido,
+    marcarPago,
+    fecharCaixa,
     formatarReais,
   };
 
