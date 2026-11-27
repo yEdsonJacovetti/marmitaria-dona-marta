@@ -41,3 +41,5 @@ Link do jira usado nas sprints: **https://edsonjacovetti2002.atlassian.net/jira/
 
 Link do GitHub: **https://github.com/yEdsonJacovetti/marmitaria-dona-marta**
 
+Link do web app: **https://marmitaria-dona-marta.vercel.app/**
+
