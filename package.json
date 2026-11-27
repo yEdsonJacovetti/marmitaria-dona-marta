@@ -1,0 +1,10 @@
+{
+  "name": "marmitaria-dona-marta",
+  "version": "1.0.0",
+  "description": "Web App para organizar os pedidos da marmitaria da Dona Marta no horário de pico",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/"
+  },
+  "license": "MIT"
+}
